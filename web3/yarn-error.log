@@ -1,0 +1,53 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\Martin\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js add moralis react-moralis
+
+PATH: 
+  C:\Users\Martin\bin;D:\Git\mingw64\bin;D:\Git\usr\local\bin;D:\Git\usr\bin;D:\Git\usr\bin;D:\Git\mingw64\bin;D:\Git\usr\bin;C:\Users\Martin\bin;C:\Python312\Scripts;C:\Python312;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\ProgramData\Oracle\Java\javapath;C:\Program Files (x86)\Intel\iCLS Client;C:\Program Files\Intel\iCLS Client;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\WiFi\bin;C:\Program Files\Common Files\Intel\WirelessCommon;C:\Program Files\MiKTeX 2.9\miktex\bin\x64;D:\Git\cmd;C:\WINDOWS\System32\OpenSSH;C:\cygwin64\bin;C:\MinGW\bin;C:\Program Files\Java\jdk1.8.0_111\bin;C:\Program Files\Java\jre1.8.0_111\bin;C:\Users\Martin\Anaconda3\Scripts;C:\Program Files\PostgreSQL\15\bin\psql.exe;C:\Program Files\nodejs;C:\ProgramData\chocolatey\bin;C:\Users\Martin\AppData\Local\Programs\Python\Python39\Scripts;C:\Users\Martin\AppData\Local\Programs\Python\Python39;C:\Users\Martin\AppData\Local\Programs\Python\Python37-32\Scripts;C:\Users\Martin\AppData\Local\Programs\Python\Python37-32;C:\Program Files\Intel\WiFi\bin;C:\Program Files\Common Files\Intel\WirelessCommon;C:\texlive\2016\bin\win32;C:\Users\Martin\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Heroku\bin;C:\Program Files\JetBrains\PyCharm Community Edition 2020.3\bin;C:\Program Files\Graphviz;C:\Program Files\Graphviz\release\bin;C:\Users\Martin\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Martin\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin;C:\Users\Martin\AppData\Roaming\npm;D:\Git\usr\bin\vendor_perl;D:\Git\usr\bin\core_perl
+
+Yarn version: 
+  1.22.10
+
+Node version: 
+  20.9.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, unlink 'C:\Users\Martin\web3Projects\RSPx\web3\node_modules\bufferutil\prebuilds\win32-x64\node.napi.node'
+
+npm manifest: 
+  {
+    "name": "hardhat-project",
+    "devDependencies": {
+      "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+      "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+      "@nomiclabs/hardhat-etherscan": "^3.0.0",
+      "@nomiclabs/hardhat-waffle": "^2.0.2",
+      "chai": "^4.3.4",
+      "ethereum-waffle": "^3.4.0",
+      "ethers": "^5.5.3",
+      "hardhat": "^2.18.3",
+      "hardhat-deploy": "^0.10.4",
+      "hardhat-gas-reporter": "^1.0.7"
+    },
+    "dependencies": {
+      "@nomiclabs/hardhat-ethers": "^2.2.3",
+      "@openzeppelin/contracts": "^5.0.0",
+      "alchemy-sdk": "^2.10.1",
+      "dotenv": "^16.3.1",
+      "node": "^20.9.0",
+      "npx": "^10.2.2",
+      "prettier-plugin-solidity": "^1.0.0-beta.19"
+    },
+    "scripts": {
+      "lint": "npx prettier --check .",
+      "lint:fix": "npx prettier --write ."
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
