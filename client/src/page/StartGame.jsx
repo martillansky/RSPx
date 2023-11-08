@@ -130,9 +130,8 @@ const StartGame = () => {
                 <CustomInput 
                     type = "string"
                     value = {playerChallengedName}
-                    placeholder = "Click popover to challenge"
+                    placeholder = "Click popover"
                     disabled = {true}
-
                 />
             </>
         )

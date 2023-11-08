@@ -31,11 +31,12 @@ contract ContractsHandler {
         uint256 stake; /// @param stake Stores a copy of the original stake
     }
 
-    mapping(address => uint256) public playerInfo; // Mapping of player addresses to player index in the players array
-    mapping(bytes32 => uint256) public gameInfo; // Mapping of game names to game index in the games array
+    mapping(address => uint256) private playerInfo; // Mapping of player addresses to player index in the players array
+    mapping(bytes32 => uint256) private gameInfo; // Mapping of game names to game index in the games array
+    mapping(bytes32 => Game) private gameMap; // Mapping of game names to game index in the games array
     
-    Player[4] public players; // Array of players
-    Game[6] public games; // Array of games
+    Player[4] private players; // Array of players
+    Game[6] private games; // Array of games
     uint public playersLen;
     uint public gamesLen;
     

@@ -56,7 +56,7 @@ export const GlobalContextProvider = ({ children }) => {
 
   //* Set the wallet address to the state
   const updateCurrentWalletAddress = async () => {
-    const accounts = await window?.ethereum?.request({ method: 'eth_requestAccounts' });
+    const accounts = await window?.ethereum?.request({ method: 'eth_requestAccounts' });    
     if (accounts) setWalletAddress(accounts[0]);
   };
 
@@ -111,12 +111,10 @@ export const GlobalContextProvider = ({ children }) => {
     const fetchGameData = async () => {
       if (!!handler && !!walletAddress) {
         try {
-          const index = Number(await handler.playerInfo(walletAddress));
-          const isPlayerRegistered = (index !== 0);
+          const isPlayerRegistered = await handler.isPlayer(walletAddress);
           if (isPlayerRegistered) {
-            setMyIndex(index-1);
             setGameData({ activeGame: true });
-            
+            var index = 0;
             const pList = [];
             let i = 0;
             const max = Number(await handler.playersLen());
@@ -124,15 +122,16 @@ export const GlobalContextProvider = ({ children }) => {
               const tuplePlayer = await handler.getPlayerNumber(i);
               const newPlayer = {pName: tuplePlayer[0], pAddress: tuplePlayer[1]}
               pList.push(newPlayer);
+              if (newPlayer.pAddress.toLowerCase() === walletAddress.toLowerCase()) index = i;
               i++;
             }
-            
+            setMyIndex(index);
             setPlayersList(pList);
 
             const gList = await handler.getGamesPlayer();
             setGamesList(gList.filter(gameName => gameName.length > 0));
             
-            const playerName = pList[index-1].pName;
+            const playerName = pList[index].pName;
             navigate(`/start-game`);
             if (!eventTriggered) {
               setShowAlert({

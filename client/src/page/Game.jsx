@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { CustomButton, CustomInput, CustomTabs, GameLoad, MoveSelection, PageHOC } from '../components';
+import { CustomButton, CustomTabs, GameLoad, MoveSelection, PageHOC } from '../components';
 import { useGlobalContext } from '../context';
 import styles from '../styles';
 import { ethers } from 'ethers';
