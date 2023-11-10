@@ -2,7 +2,10 @@ import { ethers } from "hardhat";
 
 async function main() {
   // Grab the contract factory 
-  const ContractsHandlerFactory = await ethers.getContractFactory("ContractsHandler");
+  const UtilsLibFactory = await ethers.getContractFactory("Utils");
+  const utilsContract = await UtilsLibFactory.deploy(); // Instance of the contract 
+
+  const ContractsHandlerFactory = await ethers.getContractFactory("ContractsHandler", {libraries: {Utils: utilsContract.address}});
 
   // Start deployment, returning a promise that resolves to a contract object
   const handlerContract = await ContractsHandlerFactory.deploy(); // Instance of the contract 

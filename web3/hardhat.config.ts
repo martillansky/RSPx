@@ -1,3 +1,4 @@
+require("@chainlink/hardhat-chainlink");
 import '@nomiclabs/hardhat-ethers';
 export default {
   solidity: {

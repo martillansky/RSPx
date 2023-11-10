@@ -28,7 +28,7 @@ const Game = () => {
         setDisabled(true);
         await handler.play(weapon, gameName.current, {
             value: ethers.utils.parseEther(stake),
-            //gasLimit: 200000
+            gasLimit: 200000
         })
         .then(() => {
             setCanAskTimeout(false);
@@ -42,7 +42,7 @@ const Game = () => {
     const handleClickReveal = async () => {
         const accessObject = JSON.parse(localStorage.getItem(gameName.current));
         setDisabledReveal(true);
-        await handler.solve(gameName.current, accessObject['_c1'], accessObject['_salt'])
+        await handler.solve(gameName.current, accessObject['_c1'], accessObject['_salt'], {gasLimit: 200000})
         .then(() => {
 
         })
@@ -53,7 +53,7 @@ const Game = () => {
 
     const timeoutHandler = async () => {
         if (walletAddress.toLowerCase() === player1.toLowerCase()) {
-            await handler.j2Timeout(gameName.current)
+            await handler.j2Timeout(gameName.current, {gasLimit: 200000})
             .then(() => {
 
             })
@@ -61,7 +61,7 @@ const Game = () => {
                 setErrorMessage(e);
             })
         } else if (walletAddress.toLowerCase() === player2.toLowerCase()) {
-            await handler.j1Timeout(gameName.current)
+            await handler.j1Timeout(gameName.current, {gasLimit: 200000})
             .then(() => {
 
             })
