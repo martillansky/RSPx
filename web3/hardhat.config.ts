@@ -1,17 +1,5 @@
 require("@chainlink/hardhat-chainlink");
 import '@nomiclabs/hardhat-ethers';
-/* export default {
-  solidity: {
-    version: "0.4.26", 
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-    }
-  }, 
-} */
-
 require("@nomiclabs/hardhat-waffle")
 require("hardhat-gas-reporter")
 require("./tasks/block-number")
