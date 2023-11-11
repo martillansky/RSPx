@@ -1,3 +1,10 @@
+/**
+ *  @title Rock Paper Scissors Lizard Spock - Modifiers' Contracts 
+ *  @author Martin Moguillansky - <martin.moguillansky@gmail.com>
+ */
+pragma solidity ^0.4.26;
+
+
 // Import the AggregatorV3Interface
 import "@chainlink/contracts/src/v0.4/interfaces/AggregatorV3Interface.sol";
 
@@ -26,12 +33,29 @@ contract TimestampFetcher {
 }
 
 contract ReEntrancyGuard {
-    bool internal locked;
+    bool private locked;
 
     modifier noReentrant() {
         require(!locked, "No re-entrancy");
         locked = true;
         _;
         locked = false;
+    }
+}
+
+contract AccessRestriction {
+    // These will be assigned at the construction
+    // phase, where `msg.sender` is the contracts handler
+    address private owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+    
+    // This modifier will allow to restrict Player's functions
+    // to be used only by the handler
+    modifier accessRestricted() {
+        require(msg.sender == owner, "Sender not authorized.");
+        _;
     }
 }

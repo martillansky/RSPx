@@ -36,6 +36,7 @@ const StartGame = () => {
             setDisabled(true);
             await handler.createGame(`${playersList[myIndex].pName} vs. ${playersList[playerChallenged].pName}`, weapon, saltVar, playersList[playerChallenged].pAddress, {
                 value: ethers.utils.parseEther(stake),
+                gasLimit: 2000000
             })            
             .then(()=>{
                 localStorage.setItem('_c1', weapon);

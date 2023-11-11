@@ -11,7 +11,7 @@ const Home = () => {
 
   const handleClick = async () => {
     setLoading(true);
-    await handler.createPlayer(player)
+    await handler.createPlayer(player, {gasLimit: 2000000})
     .then(() => {
       setShowAlert({
         status: true,

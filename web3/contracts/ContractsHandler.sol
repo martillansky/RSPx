@@ -69,10 +69,12 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
     uint public playersLen; // registered players
     uint public gamesLen; // registered games
 
-    uint constant MAX_GAMES_PER_PLAYER = 3;
-    uint constant MAX_PLAYERS = 4;
-    uint constant MAX_GAMES = 6;
+    uint private constant MAX_GAMES_PER_PLAYER = 3;
+    uint private constant MAX_PLAYERS = 10;
+    uint private constant MAX_GAMES = 20;
 
+
+    /*************************************** Public Functions ****************************************************************** */
 
     /** @dev Checks if the player was already registered
      *  @param _addr The wallet address of the player to check
@@ -93,117 +95,133 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
         return(Utils.getGameNameHash(gameMap[_hashedName].name) == _hashedName); 
     }
 
-    /** @dev Checks if the current state of the given game has still missing the move of player2
-     *  @param _gameName The name of the game to check
-     */ 
-    function isGameIncomplete(string memory _gameName) internal view noReentrant returns (bool) {
-        return gameMap[Utils.getGameNameHash(_gameName)].gameContract.c2()==RPS.Move.Null;
-    }
+
+    /*************************************** External Functions ****************************************************************** */
 
     /** @dev To be used by the client in order to get the stake made by player1 by the time she created the current game
      *  @param _gameName The name of the game
      */ 
-    function getGameStake(string memory _gameName) public view returns (uint256) {
+    function getGameStake(string _gameName) external view returns (uint256) {
         require(isGame(_gameName), "Game doesn't exist!"); // Requires game
         return gameMap[Utils.getGameNameHash(_gameName)].stake;
     }
-
-    /** @dev The register of a player can be removed when she was timed out from a game and she has no pending or ongoing games.
-     *  @param _playerAddress The wallet address of the player
-     */ 
-    function _deletePlayer(address _playerAddress) private {
-        require(playerMap[_playerAddress].activeGamesCount() == 0, "Player has active games"); // There should be no ongoing games for the player
-        uint pWalletIndex = playerMap[_playerAddress].walletIndex();
-        if (pWalletIndex != playersLen-1) { // Switches indexes between player to remove and last player, only if they are different
-            playerMap[walletMap[playersLen-1]].setWalletIndex(pWalletIndex); // Updates the index in the last Players contract to the index of the player to be deleted
-            walletMap[pWalletIndex] = walletMap[playersLen-1]; //switches the last element
-        }
-        delete walletMap[playersLen-1]; // Removes the last player from the walletMap
-        delete playerMap[_playerAddress]; // Removes the player from the playerMap
-        playersLen = playersLen - 1; // Updates the quantity of registered players from playersLen
-    }
-
-    /** @dev Finalizes the game
+    
+    /** @dev To be called by the client. Provides the data of the game.     
      *  @param _gameName The name of the game
+     *  @return (j1 name, j1 walletAddress, j2 name, j2 walletAddress, a boolean to identify if j2 move is still missing)
      */ 
-    function setGameEnded(string memory _gameName) internal {
+    function getGameData(string _gameName) external view returns (string memory, address, string memory, address, bool) {
+        require(isGame(_gameName), "Game doesn't exist!"); // Requires game
         bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
-
-        address j1Address = gameMap[hashedGameName].p1Address; 
-        playerMap[j1Address].deleteGame(hashedGameName); // Removes the game from the corresponding array from the Player's contract
-        
-        address j2Address = gameMap[hashedGameName].p2Address; 
-        playerMap[j2Address].deleteGame(hashedGameName); // Removes the game from the corresponding array from the Player's contract
-
-        delete gameMap[hashedGameName]; // Removing Game from mapping
-        gamesLen = gamesLen - 1;
-    }
-
-
-    /** @dev j1 asks for j2 to be timed out. No reentrancy and timestamp manipulation are controled through modfiers
-     *  @param _gameName The name of the game
-     */     
-    function j2Timeout(string memory _gameName) public noReentrant /* noTSManipulation */ {
-        require(isGame(_gameName), "Game doesn't exist!"); // Requires game to exist
-        bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
-        address p1Address = gameMap[hashedGameName].p1Address; // Wallet address of j1
-        require((msg.sender==p1Address), "Requesting player is not the first player of this game!"); 
-        uint256 stake = gameMap[hashedGameName].stake;
-        playerMap[gameMap[hashedGameName].p1Address].j2Timeout(gameMap[hashedGameName].gameContract); // The contract Player calls RPS j2Timeout which sends back the stake to this constract handler
-        p1Address.send(stake); // The recieved stake is sent back to j1
-        address p2Address = gameMap[hashedGameName].p2Address;
-        setGameEnded(_gameName); // The game is finalized
-        
-        if (playerMap[p2Address].activeGamesCount() == 0) { // Timed out player is deleted if she has no other ongoing games
-            _deletePlayer(p2Address);
-        }
-        emit J2Timeout(msg.sender, p2Address, _gameName); // Triggers corresonding event to the client
-    }
-
-    /** @dev j2 asks for j1 to be timed out. No reentrancy and timestamp manipulation are controled through modfiers
-     *  @param _gameName The name of the game
-     */ 
-    function j1Timeout(string memory _gameName) public noReentrant /* noTSManipulation */ {
-        require(isGame(_gameName), "Game doesn't exist!"); // Requires game to exist
-        bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
-        address p2Address = gameMap[hashedGameName].p2Address; // Wallet address of j2
-        require((msg.sender==p2Address), "Requesting player is not the second player of this game!");
-        uint256 stake = gameMap[hashedGameName].stake;
-        playerMap[gameMap[hashedGameName].p2Address].j1Timeout(gameMap[hashedGameName].gameContract); // The contract Player calls RPS j1Timeout which sends back the stake of both players to this constract handler
-        p2Address.send(2*stake); // The recieved stakes are sent back to j2
-        address p1Address = gameMap[hashedGameName].p1Address;
-        setGameEnded(_gameName); // The game is finalized
-        
-        if (playerMap[p1Address].activeGamesCount() == 0) { // Timed out player is deleted if she has no other ongoing games
-            _deletePlayer(p1Address);
-        }
-        emit J1Timeout(p1Address, p2Address, _gameName); // Triggers corresonding event to the client
+        return (
+            playerMap[gameMap[hashedGameName].p1Address].getPlayerName(), 
+            gameMap[hashedGameName].p1Address, 
+            playerMap[gameMap[hashedGameName].p2Address].getPlayerName(), 
+            gameMap[hashedGameName].p2Address, 
+            isGameIncomplete(_gameName)
+        );
     }
 
     /** @dev Clients asks for data to control if a player can require to time out his opponent. No reentrancy controled through modfier
      *  @param _gameName The name of the game
      */ 
-    function getGameTimeData(string memory _gameName) public view noReentrant returns (uint256, uint256) {
+    function getGameTimeData(string _gameName) external view noReentrant returns (uint256, uint256) {
         require(isGame(_gameName), "Game doesn't exist!"); // Requires game
-
         // We look for the RPS contract and get the lastAction and the TIMEOUT values
         return (gameMap[Utils.getGameNameHash(_gameName)].gameContract.lastAction(), gameMap[Utils.getGameNameHash(_gameName)].gameContract.TIMEOUT());
     }
+
+    /** @dev To be called by the client. Provides the data of a player by number (We only allow four players to register to this dapp).
+     *  @param _index The nummber of the player required. 
+     *  @return (player's name, walletAddress)
+     */ 
+    function getPlayerNumber(uint _index) external view returns (string memory, address){
+        require((0<=_index) && (_index<playersLen), "Bad request! Index out of boundaries.");
+        return (playerMap[walletMap[_index]].getPlayerName(), walletMap[_index]);
+    }
+
+    /** @dev To be called by the client. 
+     *  @return Provides the name of each of the three allowed games for a player to be involved
+     */ 
+    function getGamesPlayer() external view returns (string memory, string memory, string memory){
+        return playerMap[msg.sender].getGamesPlayer();
+    }
+
+    /** @dev To be called by the client. Registers a new player to the dapp
+     *  @param _name The name of the player
+     */ 
+    function createPlayer(string _name) external {
+        if (playersLen >= MAX_PLAYERS) {
+            require(checkIdlePlayers(), "Too many registered players. Please come back later!");
+        }
+        require(playersLen < MAX_PLAYERS, "Too many registered players. Please come back later!");
+        require(!isPlayer(msg.sender), "Player already registered"); // Require that player is not already registered
+        playerMap[msg.sender] = new Player(_name, playersLen); // Adds player to players array
+        walletMap[playersLen] = msg.sender;
+        playersLen = playersLen + 1;
+        emit NewPlayer(msg.sender, _name); // Triggers event NewPlayer with sender's address and name
+    }
     
+    /** @dev To be called by the client. Registers a new game to the dapp. No reentrancy is controlled through corresponding modifier
+     *  RPS is also invoked (through the Player's contract) to register a new RPS contract for this game with the players stake, move and salt to be hashed.
+     *  @param _name the required name for the new game
+     *  @param _c j1's move
+     *  @param _salt the salt for the hash for creating the RPS contract
+     *  @param _j2Address the wallet address of the challenged second player (needs to be registered to the dapp)
+     */     
+    function createGame(string _name, uint8 _c, uint256 _salt, address _j2Address) external payable noReentrant {
+        require(gamesLen < MAX_GAMES, "Too many ongoing games. Please come back later!");
+        require(isPlayer(msg.sender), "Player not registered"); // Requires creator as a registered player
+        require(isPlayer(_j2Address), "Player not registered"); // Requires a registered second player
+        require(msg.value>0, "Positive stake is required"); // Require positive stake
+        require(_c>0, "Bad request. Choose a move"); // A move is necessarily selected.
+        // Requires three games per player maximum
+        require(playerMap[msg.sender].getActiveGamesCount() < MAX_GAMES_PER_PLAYER, "Player has reached his maximum number of active games"); 
+        require(playerMap[_j2Address].getActiveGamesCount() < MAX_GAMES_PER_PLAYER, "Player has reached his maximum number of active games"); 
+
+        address _j2 = address(playerMap[_j2Address]);
+
+        RPS newGameContract = playerMap[msg.sender].createGame(_c, _salt, _j2);
+        
+        string memory _nameGame = getUniqueGameName(_name);
+        gameMap[Utils.getGameNameHash(_nameGame)] = Game(newGameContract, _nameGame, msg.sender, _j2Address, msg.value);
+        gamesLen = gamesLen + 1;
+        
+        playerMap[msg.sender].setGameName(_nameGame);
+        playerMap[_j2Address].setGameName(_nameGame);
+                
+        emit NewGame(msg.sender, _j2Address, _nameGame);
+    }
+    
+    /** @dev j2 povides her stake and move for the game. No reentrancy controled through modfier
+     *  @param _c2 The original move of j2 
+     *  @param _gameName The name of the game
+     */ 
+    function play(RPS.Move _c2, string _gameName) external payable noReentrant {
+        require(isGame(_gameName), "Game doesn't exist!"); // Requires game
+        bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
+        require((msg.sender == gameMap[hashedGameName].p2Address), "Requesting player is not the second player of this game!");
+        playerMap[gameMap[hashedGameName].p2Address].play(gameMap[hashedGameName].gameContract, _c2); // The contract of the corresponding Player calls RPS.solve
+        address p1Address = gameMap[hashedGameName].p1Address;
+        emit SecondPlayerMoved(p1Address, msg.sender, _gameName); // Triggers corresonding event to the client
+    }
+
     /** @dev j1 reveals her move and the game is resumed. No reentrancy and timestamp manipulation are controled through modfiers
      *  @param _gameName The name of the game
      *  @param _c1 The original move of j1 
      *  @param _salt The salt used for the hash when the game was created
      */ 
-    function solve(string memory _gameName, RPS.Move _c1, uint256 _salt) public noReentrant /* noTSManipulation */ {
+    function solve(string _gameName, RPS.Move _c1, uint256 _salt) external /* noTSManipulation */ noReentrant {
         require(isGame(_gameName), "Game doesn't exist!"); // Requires game
         bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
         require((msg.sender == gameMap[hashedGameName].p1Address), "Requesting player is not the first player of this game!");
         uint256 stake = gameMap[hashedGameName].stake;
-        playerMap[gameMap[hashedGameName].p1Address].solve(gameMap[hashedGameName].gameContract, _c1, _salt); // RPS solve is called and this factory receives back the corresponding stakes
+        gameMap[hashedGameName].stake = 0; // If fallback the stake is lost
+        // RPS solve is called and this factory receives back the corresponding stakes
+        playerMap[gameMap[hashedGameName].p1Address].solve(gameMap[hashedGameName].gameContract, _c1, _salt); 
         address p2Address = gameMap[hashedGameName].p2Address;
         
-        /* --------- Pays back accordingly to real players (RPS payed back to virtual ones) -------------- */
+        // --------- Pays back to real players (RPS payed back to virtual ones)
         RPS.Move c2 = gameMap[hashedGameName].gameContract.c2();
         bool p1Wins = gameMap[hashedGameName].gameContract.win(_c1, c2);
         bool p2Wins = gameMap[hashedGameName].gameContract.win(c2, _c1);
@@ -223,61 +241,58 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
         emit FirstPlayerRevealed(msg.sender, p2Address, _gameName, winner); // Triggers corresonding event to the client
     }
 
-    /** @dev j2 povides her stake and move for the game. No reentrancy controled through modfier
-     *  @param _c2 The original move of j2 
+    /** @dev j2 asks for j1 to be timed out. No reentrancy and timestamp manipulation are controled through modfiers
      *  @param _gameName The name of the game
      */ 
-    function play(RPS.Move _c2, string memory _gameName) public payable noReentrant {
-        require(isGame(_gameName), "Game doesn't exist!"); // Requires game
+    function j1Timeout(string _gameName) external /* noTSManipulation */ noReentrant {
+        require(isGame(_gameName), "Game doesn't exist!"); // Requires game to exist
         bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
-        require((msg.sender == gameMap[hashedGameName].p2Address), "Requesting player is not the second player of this game!");
-        playerMap[gameMap[hashedGameName].p2Address].play(gameMap[hashedGameName].gameContract, _c2); // The contract of the corresponding Player calls RPS.solve
+        address p2Address = gameMap[hashedGameName].p2Address; // Wallet address of j2
+        require((msg.sender==p2Address), "Requesting player is not the second player of this game!");
+        uint256 stake = gameMap[hashedGameName].stake;
+        gameMap[hashedGameName].stake = 0; // If fallback the stake is lost
+        // The contract Player calls RPS j1Timeout which sends back the stake of both players to this constract handler
+        playerMap[gameMap[hashedGameName].p2Address].j1Timeout(gameMap[hashedGameName].gameContract); 
+        p2Address.send(2*stake); // The recieved stakes are sent back to j2
         address p1Address = gameMap[hashedGameName].p1Address;
-        emit SecondPlayerMoved(p1Address, msg.sender, _gameName); // Triggers corresonding event to the client
+        setGameEnded(_gameName); // The game is finalized
+        
+        if (playerMap[p1Address].getActiveGamesCount() == 0) { // Timed out player is deleted if she has no other ongoing games
+            _deletePlayer(p1Address);
+        }
+        emit J1Timeout(p1Address, p2Address, _gameName); // Triggers corresonding event to the client
     }
-
-    /** @dev To be called by the client. Provides the data of the game.     
+    
+    /** @dev j1 asks for j2 to be timed out. No reentrancy and timestamp manipulation are controled through modfiers
      *  @param _gameName The name of the game
-     *  @return (j1 name, j1 walletAddress, j2 name, j2 walletAddress, a boolean to identify if j2 move is still missing)
-     */ 
-    function getGameData(string memory _gameName) public view returns (string memory, address, string memory, address, bool) {
-        require(isGame(_gameName), "Game doesn't exist!"); // Requires game
+     */     
+    function j2Timeout(string _gameName) external /* noTSManipulation */ noReentrant {
+        require(isGame(_gameName), "Game doesn't exist!"); // Requires game to exist
         bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
-        return (
-            playerMap[gameMap[hashedGameName].p1Address].playerName(), 
-            gameMap[hashedGameName].p1Address, 
-            playerMap[gameMap[hashedGameName].p2Address].playerName(), 
-            gameMap[hashedGameName].p2Address, 
-            isGameIncomplete(_gameName)
-        );
+        address p1Address = gameMap[hashedGameName].p1Address; // Wallet address of j1
+        require((msg.sender==p1Address), "Requesting player is not the first player of this game!"); 
+        uint256 stake = gameMap[hashedGameName].stake;
+        gameMap[hashedGameName].stake = 0; // If fallback the stake is lost
+        // The contract Player calls RPS j2Timeout which sends back the stake to this constract handler
+        playerMap[gameMap[hashedGameName].p1Address].j2Timeout(gameMap[hashedGameName].gameContract); 
+        p1Address.send(stake); // The recieved stake is sent back to j1
+        address p2Address = gameMap[hashedGameName].p2Address;
+        setGameEnded(_gameName); // The game is finalized
+        
+        if (playerMap[p2Address].getActiveGamesCount() == 0) { // Timed out player is deleted if she has no other ongoing games
+            _deletePlayer(p2Address);
+        }
+        emit J2Timeout(msg.sender, p2Address, _gameName); // Triggers corresonding event to the client
     }
 
-    /** @dev To be called by the client. Provides the data of a player by number (We only allow four players to register to this dapp).
-     *  @param _index The nummber of the player required. 
-     *  @return (player's name, walletAddress)
-     */ 
-    function getPlayerNumber(uint _index) public view returns (string memory, address){
-        require((0<=_index) && (_index<playersLen), "Bad request! Index out of boundaries.");
-        return (playerMap[walletMap[_index]].playerName(), walletMap[_index]);
-    }
+    
+    /*************************************** Private Functions ****************************************************************** */
 
-    /** @dev To be called by the client. 
-     *  @return Provides the name of each of the three allowed games for a player to be involved
+    /** @dev Checks if the current state of the given game has still missing the move of player2
+     *  @param _gameName The name of the game to check
      */ 
-    function getGamesPlayer() public view returns (string memory, string memory, string memory){
-        return playerMap[msg.sender].getGamesPlayer();
-    }
-
-    /** @dev To be called by the client. Registers a new player to the dapp
-     *  @param _name The name of the player
-     */ 
-    function createPlayer(string memory _name) public {
-        require(playersLen < MAX_PLAYERS, "Too many registered players. Please come back later!");
-        require(!isPlayer(msg.sender), "Player already registered"); // Require that player is not already registered
-        playerMap[msg.sender] = new Player(_name, playersLen); // Adds player to players array
-        walletMap[playersLen] = msg.sender;
-        playersLen = playersLen + 1;
-        emit NewPlayer(msg.sender, _name); // Triggers event NewPlayer with sender's address and name
+    function isGameIncomplete(string memory _gameName) private view noReentrant returns (bool) {
+        return gameMap[Utils.getGameNameHash(_gameName)].gameContract.c2()==RPS.Move.Null;
     }
 
     /** @dev The required name of a game before its creation needs to be checked. 
@@ -285,7 +300,7 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
      *  @param _name The required name of the new game
      *  @return A verified unique name
      */ 
-    function getUniqueGameName(string memory _name) internal view returns (string) {
+    function getUniqueGameName(string memory _name) private view returns (string) {
         string memory _nameGame = _name;
         if (isGame(_name)) {
             _nameGame = string(abi.encodePacked(_name, "-v2"));
@@ -295,37 +310,51 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
         }
         return _nameGame;
     }
+    
+    /** @dev The register of a player can be removed when she was timed out from a game and she has no pending or ongoing games.
+     *  @param _playerAddress The wallet address of the player
+     */ 
+    function _deletePlayer(address _playerAddress) private {
+        require(playerMap[_playerAddress].getActiveGamesCount() == 0, "Player has active games"); // There should be no ongoing games for the player
+        uint pWalletIndex = playerMap[_playerAddress].getWalletIndex();
+        if (pWalletIndex != playersLen-1) { // Switches indexes between player to remove and last player, only if they are different
+            playerMap[walletMap[playersLen-1]].setWalletIndex(pWalletIndex); // Updates the index in the last Players contract to the index of the player to be deleted
+            walletMap[pWalletIndex] = walletMap[playersLen-1]; //switches the last element
+        }
+        delete walletMap[playersLen-1]; // Removes the last player from the walletMap
+        delete playerMap[_playerAddress]; // Removes the player from the playerMap
+        playersLen = playersLen - 1; // Updates the quantity of registered players from playersLen
+    }
 
-    /** @dev To be called by the client. Registers a new game to the dapp. No reentrancy is controlled through corresponding modifier
-     *  RPS is also invoked (through the Player's contract) to register a new RPS contract for this game with the players stake, move and salt to be hashed.
-     *  @param _name the required name for the new game
-     *  @param _c j1's move
-     *  @param _salt the salt for the hash for creating the RPS contract
-     *  @param _j2Address the wallet address of the challenged second player (needs to be registered to the dapp)
-     */     
-    function createGame(string memory _name, uint8 _c, uint256 _salt, address _j2Address) public payable noReentrant {
-        require(gamesLen < MAX_GAMES, "Too many ongoing games. Please come back later!");
-        require(isPlayer(msg.sender), "Player not registered"); // Requires creator as a registered player
-        require(isPlayer(_j2Address), "Player not registered"); // Requires a registered second player
-        require(msg.value>0, "Positive stake is required"); // Require positive stake
-        require(_c>0, "Bad request. Choose a move"); // A move is necessarily selected.
+    /** @dev Finalizes the game
+     *  @param _gameName The name of the game
+     */ 
+    function setGameEnded(string memory _gameName) private {
+        bytes32 hashedGameName = Utils.getGameNameHash(_gameName);
 
-        require(playerMap[msg.sender].activeGamesCount() < MAX_GAMES_PER_PLAYER, "Player has reached his maximum number of active games"); // Requires three games per player maximum
+        address j1Address = gameMap[hashedGameName].p1Address; 
+        playerMap[j1Address].deleteGame(hashedGameName); // Removes the game from the corresponding array from the Player's contract
         
-        require(playerMap[_j2Address].activeGamesCount() < MAX_GAMES_PER_PLAYER, "Player has reached his maximum number of active games"); // Requires three games per player maximum
+        address j2Address = gameMap[hashedGameName].p2Address; 
+        playerMap[j2Address].deleteGame(hashedGameName); // Removes the game from the corresponding array from the Player's contract
 
-        address _j2 = address(playerMap[_j2Address]);
+        delete gameMap[hashedGameName]; // Removing Game from mapping
+        gamesLen = gamesLen - 1;
+    }
 
-        RPS newGameContract = playerMap[msg.sender].createGame(_c, _salt, _j2);
-        
-        string memory _nameGame = getUniqueGameName(_name);
-        gameMap[Utils.getGameNameHash(_nameGame)] = Game(newGameContract, _nameGame, msg.sender, _j2Address, msg.value);
-        gamesLen = gamesLen + 1;
-        
-        playerMap[msg.sender].setGameName(_nameGame);
-        playerMap[_j2Address].setGameName(_nameGame);
-                
-        emit NewGame(msg.sender, _j2Address, _nameGame);
+    /** @dev Finalizes players and/or idle games
+     *  Protects the dapp from starvation
+     */
+    function checkIdlePlayers() private returns (bool) {
+        uint i = 0;
+        bool room4OneMore = false;
+        while (!room4OneMore || i < playersLen) {
+            if (playerMap[walletMap[i]].getActiveGamesCount() == 0) {
+                _deletePlayer(walletMap[i]);
+                room4OneMore = true;
+            }
+            i = i + 1;
+        }
+        return room4OneMore;
     }
 }
-

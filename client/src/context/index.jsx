@@ -86,9 +86,7 @@ export const GlobalContextProvider = ({ children }) => {
   
   //* Activate event listeners for the smart contract
   useEffect(() => {
-    if (
-      //step === -1 && 
-      handler) {
+    if (handler) {
       createEventListeners(
         navigate,
         handler,
@@ -99,10 +97,7 @@ export const GlobalContextProvider = ({ children }) => {
         setEventTriggered,
       );
     }
-  }, [
-    step, 
-    handler, updateCurrentWalletAddress
-  ]);
+  }, [step, handler, updateCurrentWalletAddress]);
  
 
   
