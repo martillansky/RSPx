@@ -1,6 +1,6 @@
 require("@chainlink/hardhat-chainlink");
 import '@nomiclabs/hardhat-ethers';
-export default {
+/* export default {
   solidity: {
     version: "0.4.26", 
     settings: {
@@ -10,9 +10,9 @@ export default {
       },
     }
   }, 
-}
+} */
 
-/* require("@nomiclabs/hardhat-waffle")
+require("@nomiclabs/hardhat-waffle")
 require("hardhat-gas-reporter")
 require("./tasks/block-number")
 require("@nomiclabs/hardhat-etherscan")
@@ -39,13 +39,13 @@ export default {
       },
     }
   }, 
-  //defaultNetwork: "sepolia",
-  defaultNetwork: "hardhat",
+  defaultNetwork: "sepolia",
+  //defaultNetwork: "hardhat",
   networks: {
     //hardhat: {},
-    hardhat: {
+    /* hardhat: {
       chainId: 31337,
-    },
+    }, */
     localhost: {
       url: "http://localhost:8545",
       chainId: 31337,
@@ -72,4 +72,3 @@ export default {
     },
   },
 }
- */
