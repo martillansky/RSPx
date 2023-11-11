@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 
 
 const Game = () => {
-    const {handler, walletAddress, gameData, gamesList, gameIndex, setErrorMessage} = useGlobalContext();
+    const {handler, walletAddress, gameData, gamesList, gameIndex, setErrorMessage, setShowAlert} = useGlobalContext();
     const [stake, setStake] = useState('');
     const [weapon, setWeapon] = useState('');
     const [disabled, setDisabled] = useState(true);
@@ -44,7 +44,11 @@ const Game = () => {
         setDisabledReveal(true);
         await handler.solve(gameName.current, accessObject['_c1'], accessObject['_salt'], {gasLimit: 200000})
         .then(() => {
-
+            setShowAlert({
+                status: true,
+                type: "info",
+                message: "Your request was submited. Please wait for the confirmation!"
+            });
         })
         .catch (e => {
             setErrorMessage(e);
@@ -55,7 +59,7 @@ const Game = () => {
         if (walletAddress.toLowerCase() === player1.toLowerCase()) {
             await handler.j2Timeout(gameName.current, {gasLimit: 200000})
             .then(() => {
-
+                
             })
             .catch (e => {
                 setErrorMessage(e);
@@ -63,7 +67,7 @@ const Game = () => {
         } else if (walletAddress.toLowerCase() === player2.toLowerCase()) {
             await handler.j1Timeout(gameName.current, {gasLimit: 200000})
             .then(() => {
-
+                
             })
             .catch (e => {
                 setErrorMessage(e);

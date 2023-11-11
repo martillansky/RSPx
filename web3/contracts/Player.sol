@@ -58,7 +58,7 @@ contract Player {
     }
 
     function deleteGame(bytes32 hashedGameName) public {
-        activeGamesCount -= 1; // Player frees one slot of her available games
+        activeGamesCount = activeGamesCount - 1; // Player frees one slot of her available games
         uint indexLast = activeGamesCount;
         
         if (Utils.getGameNameHash(gamesNames[indexLast]) != hashedGameName) { // If it is not the last game which needs to be set to end, we switch it to the last position
@@ -80,6 +80,10 @@ contract Player {
 
     function setGameName(string memory _gameName) {
         gamesNames[activeGamesCount] = _gameName;
-        activeGamesCount += 1;
+        activeGamesCount = activeGamesCount + 1;
+    }
+
+    function setWalletIndex(uint _index) public {
+        walletIndex = _index;
     }
 }

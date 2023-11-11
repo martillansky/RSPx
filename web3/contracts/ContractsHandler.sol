@@ -111,11 +111,16 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
     /** @dev The register of a player can be removed when she was timed out from a game and she has no pending or ongoing games.
      *  @param _playerAddress The wallet address of the player
      */ 
-    function _deletePlayer(address _playerAddress) internal {
+    function _deletePlayer(address _playerAddress) private {
         require(playerMap[_playerAddress].activeGamesCount() == 0, "Player has active games"); // There should be no ongoing games for the player
-        delete walletMap[playerMap[_playerAddress].walletIndex()]; // Removes the player from the walletMap in order to free the slot for registering a new player
+        uint pWalletIndex = playerMap[_playerAddress].walletIndex();
+        if (pWalletIndex != playersLen-1) { // Switches indexes between player to remove and last player, only if they are different
+            playerMap[walletMap[playersLen-1]].setWalletIndex(pWalletIndex); // Updates the index in the last Players contract to the index of the player to be deleted
+            walletMap[pWalletIndex] = walletMap[playersLen-1]; //switches the last element
+        }
+        delete walletMap[playersLen-1]; // Removes the last player from the walletMap
         delete playerMap[_playerAddress]; // Removes the player from the playerMap
-        playersLen -= 1; // Updates the quantity of registered players from playersLen
+        playersLen = playersLen - 1; // Updates the quantity of registered players from playersLen
     }
 
     /** @dev Finalizes the game
@@ -130,9 +135,8 @@ contract ContractsHandler is ReEntrancyGuard, TimestampFetcher {
         address j2Address = gameMap[hashedGameName].p2Address; 
         playerMap[j2Address].deleteGame(hashedGameName); // Removes the game from the corresponding array from the Player's contract
 
-        /* Removing Game from array and mapping */
-        gamesLen -= 1;
-        delete gameMap[hashedGameName];
+        delete gameMap[hashedGameName]; // Removing Game from mapping
+        gamesLen = gamesLen - 1;
     }
 
 

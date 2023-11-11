@@ -44,7 +44,7 @@ const StartGame = () => {
                 setShowAlert({
                     status: true,
                     type: "info",
-                    message: "Your move was submited!"
+                    message: "Your move was submited. Please wait for the confirmation!"
                 });
             })
             .catch((err) => {

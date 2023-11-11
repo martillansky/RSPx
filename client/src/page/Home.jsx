@@ -3,20 +3,26 @@ import { CustomButton, CustomInput, PageHOC } from '../components';
 import { useGlobalContext } from '../context';
 
 const Home = () => {
-  const {handler, setErrorMessage} = useGlobalContext();
+  const {handler, setErrorMessage, setShowAlert} = useGlobalContext();
 
   const [player, setPlayer] = useState('');
   const [disabled, setDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
-    try {
-      setLoading(true);
-      await handler.createPlayer(player)
-    } catch (e) {
+    setLoading(true);
+    await handler.createPlayer(player)
+    .then(() => {
+      setShowAlert({
+        status: true,
+        type: "info",
+        message: "Your request was submited. Please wait for the confirmation!"
+      });
+    })
+    .catch ((e) => {
       setLoading(false);
       setErrorMessage(e);
-    }
+    });
   }
 
   useEffect(() => {
