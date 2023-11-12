@@ -9,14 +9,20 @@ In the case of RPSx, there are five possible moves, and the Nash Equilibrium is 
 We will define the expected value for each player. Let p be the probability that player 1 picks one of the five weapons, that is, rock, paper, scissors, spock, or lizard, and, on the other hand, let q be the probability that player 2 picks one of the five weapons. The expected value for player 2 is:
 
 Eu(q(rock)) =  0*p(rock) + (-1)*p(paper) + 1*p(scissors) + (-1)*p(spock) + 1*p(lizard)
+
 Eu(q(paper)) =  1*p(rock) + 0*p(paper) + (-1)*p(scissors) + 1*p(spock) + (-1)*p(lizard)
+
 Eu(q(scissors)) = (- 1)*p(rock) + 1*p(paper) + 0*p(scissors) + (-1)*p(spock) + 1*p(lizard)
+
 Eu(q(spock)) = 1*p(rock) + (-1)*p(paper) + 1*p(scissors) + 0*p(spock) + (-1)*p(lizard)
+
 Eu(q(lizard)) = (- 1)*p(rock) + 1*p(paper) + (-1)*p(scissors) + 1*p(spock) + 0*p(lizard)
+
 
 Solving the system of equations, we eventually reach that the Nash Equilibrium for the game is:
 
 For player 1, p(rock) = p(paper) = p(scissors) = p(Spock) = p(Lizard) = 1/5 
+
 For player 2, q(rock) = q(paper) = q(scissors) = q(Spock) = q(Lizard) = 1/5
 
 It's important to note that the Nash Equilibrium is not necessarily the best strategy in every situation. For example, in a single round of RPSx, it might be better to choose the most likely choice of the other player, rather than choosing randomly. However, in a series of games, the Nash Equilibrium of choosing randomly is often the best strategy.
